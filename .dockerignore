@@ -33,8 +33,7 @@ Dockerfile
 docker-compose.yml
 
 # Documentation
-README.md
-*.md
+
 
 # Environment files (will be passed via docker run -e or docker-compose)
 .env

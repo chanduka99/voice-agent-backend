@@ -11,13 +11,13 @@ services:
     environment:
       # Add your environment variables here
       # Example:
-      # GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      # DEMO_AGENT_MODEL: ${DEMO_AGENT_MODEL:-gemini-2.5-flash-native-audio-preview-09-2025}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      DEMO_AGENT_MODEL: ${DEMO_AGENT_MODEL}
       # Or use env_file to load from .env file:
     env_file:
       - app/.env  # Optional: if you have a .env file
     # Uncomment the line below to enable auto-reload in development
-    # command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    # command: uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
     volumes:
       # Mount app directory for development (enables hot-reload)
       # Comment out in production
