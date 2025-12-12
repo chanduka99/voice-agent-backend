@@ -15,6 +15,7 @@ from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
+import re
 
 # Load environment variables from .env file BEFORE importing agent
 load_dotenv(Path(__file__).parent / ".env")
@@ -279,6 +280,13 @@ async def websocket_endpoint(
         logger.debug(
             f"Starting run_live with user_id={user_id}, " f"session_id={session_id}"
         )
+
+
+        end_pattern = re.compile(
+        r'\b(good\s*bye|goodbye|farewell|lesson\s*complete|end\s*of\s*lesson)\b',
+        re.IGNORECASE
+            )
+        
         async for event in runner.run_live(
             user_id=user_id,
             session_id=session_id,
@@ -287,7 +295,30 @@ async def websocket_endpoint(
         ):
             event_json = event.model_dump_json(exclude_none=True, by_alias=True)
             logger.debug(f"[SERVER] Event: {event_json}")
+
+            # Check if the agent's response contains any end phrase
+            should_end = False
+            if hasattr(event, 'content') and event.content and hasattr(event.content, 'parts'):
+                for part in event.content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        # Check if pattern matches
+                        if end_pattern.search(part.text):
+                            logger.info(f"Detected end phrase in: {part.text[:100]}...")
+                            should_end = True
+                            break
+            
             await websocket.send_text(event_json)
+
+                    # If end detected, send end signal
+            if should_end:
+                end_signal = {
+                    "type": "conversation_end",
+                    "reason": "lesson_complete",
+                    "message": "The lesson is complete. Great job!"
+                }
+                await websocket.send_text(json.dumps(end_signal))
+                logger.info("Sent conversation_end signal to client") 
+                  
         logger.debug("run_live() generator completed")
 
     # Run both tasks concurrently
